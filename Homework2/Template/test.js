@@ -47,11 +47,11 @@ d3.csv("student-mat.csv").then(rawData =>{
                 // ADvanced Table
 
     g1.append("text")
-    .attr("x", scatterWidth / 2)
-    .attr("y", scatterHeight + 50)
-    .attr("font-size", "20px")
-    .attr("text-anchor", "middle")
-    .text("Number Of Absences")
+        .attr("x", scatterWidth / 2)
+        .attr("y", scatterHeight + 50)
+        .attr("font-size", "20px")
+        .attr("text-anchor", "middle")
+        .text("TEST")
 
     // Y label
     g1.append("text")
@@ -60,7 +60,7 @@ d3.csv("student-mat.csv").then(rawData =>{
     .attr("font-size", "20px")
     .attr("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
-    .text("Age")
+    .text("SO/AB")
 
     const gX = d3.scaleLinear()
     .domain([0, 93])
@@ -80,9 +80,6 @@ d3.csv("student-mat.csv").then(rawData =>{
         .attr("x", "-5")
         .attr("text-anchor", "end")
         .attr("transform", "rotate(-40)")
-
-
-
 
 }).catch(function(error){
   console.log(error);
