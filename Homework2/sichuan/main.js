@@ -326,7 +326,7 @@ d3.csv("student-mat.csv").then(rawData =>{
     svg.append("rect")
     .attr("width", parWidth)
     .attr("height", parHeight + 50)
-    .attr("fill", "grey")
+    .attr("fill", "lightgrey")
     .attr("transform", `translate(0, ${parTop - 30})`);
 
     svg.selectAll("myPath")
