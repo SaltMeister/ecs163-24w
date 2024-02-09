@@ -1,5 +1,5 @@
 let abFilter = 25
-const width = window.innerWidth;
+const width = window.innerWidth -100;
 const height = window.innerHeight;
 
 let scatterLeft = 0, scatterTop = 0;
@@ -17,6 +17,11 @@ let teamMargin = {top: 10, right: 30, bottom: 30, left: 60},
     teamWidth =  width - 800 - teamMargin.left - teamMargin.right,
     teamHeight = 400 - teamMargin.top - teamMargin.bottom;
 
+let parLeft = 50, parTop = 600;
+let parMargin = {top: 10, right: 30, bottom: 30, left: 60},
+    parWidth =  width - teamMargin.left - teamMargin.right,
+    parHeight = 400 - teamMargin.top - teamMargin.bottom;
+
 d3.csv("student-mat.csv").then(rawData =>{
     console.log("rawData", rawData);
     
@@ -28,7 +33,7 @@ d3.csv("student-mat.csv").then(rawData =>{
             e.age = Number(e.age)
     });
 
-    
+  //#region plot1 
 //plot 1
     const svg = d3.select("svg")
 
@@ -96,9 +101,9 @@ d3.csv("student-mat.csv").then(rawData =>{
         .attr("cy", d =>  gY(d.age) )
         .attr("r", 3)
         .attr("fill", "steelblue")
-
+    //#endregion
     // Plot 2
-    //#region
+    //#region plot2
     const g2 = svg.append("g")
     .attr("width", distrLeft + distrMargin.left + distrMargin.right)
     .attr("height", distrHeight + distrMargin.top + distrMargin.bottom)
@@ -123,7 +128,6 @@ d3.csv("student-mat.csv").then(rawData =>{
 
     let highConsumption = graph2Data.filter(d => d.averageConsumption > 2.5)
     let lowConsumption = graph2Data.filter(d => d.averageConsumption <= 2.5)
-    console.log(graph2Data)
 
     // Get Averages of q1 2 3 for each consumption class
     let highQ1 = 0
@@ -168,8 +172,6 @@ d3.csv("student-mat.csv").then(rawData =>{
             "grade": lowQ3 / lowConsumption.length
         }
     ]
-
-    console.log(lowConsumption)
 
     // Plot 2
            
@@ -239,6 +241,7 @@ d3.csv("student-mat.csv").then(rawData =>{
     .attr("font-size", "15px")
     .attr("text-anchor", "left")
     .text("High Alcohol Consumers (average consumption > 2.5)")
+
     g3.append("g")
     .attr("transform", `translate(0, ${teamHeight})`)
     .call(lXAxisCall)
@@ -276,6 +279,87 @@ d3.csv("student-mat.csv").then(rawData =>{
     //#endregion
 
     //Plot 3
+    // Process Data
+    let graph3Data = []
+    
+    rawData.forEach(d => {
+        let averageConsumption = (Number(d.Dalc) + Number(d.Walc)) / 2
+
+        graph3Data.push(
+            {
+                "averageConsumption": averageConsumption,
+                "higherEdu (boolean)": d.higher === "yes" ? 1 : 0,
+                "activities (boolean)": d.activities === "yes" ? 1 : 0,
+                "romantic (boolean)": d.romantic === "yes" ? 1 : 0,
+                "nurse (boolean)": d.nursery === "yes" ? 1 : 0,
+                "goout": Number(d.goout),
+                "famrel": Number(d.famrel),
+                
+            }
+        )
+
+    })
+    console.log(graph3Data)
+    // Dimensions
+    let dimensions = d3.keys(graph3Data[0])
+    dimensions.shift()
+
+    let y = {}
+
+    for (i in dimensions){
+        let name = dimensions[i]
+        y[name] = d3.scaleLinear()
+            .domain([0, 5])
+            .range([parHeight, 0])
+    }
+    console.log(y)
+
+    let pX = d3.scalePoint()
+        .range([0, parWidth])
+        .padding(0.2)
+        .domain(dimensions);
+    
+    
+    function path(d) {
+        return d3.line()(dimensions.map(function(p) { return [pX(p), y[p](d[p])]; }));
+    }
+    svg.append("rect")
+    .attr("width", parWidth)
+    .attr("height", parHeight + 50)
+    .attr("fill", "grey")
+    .attr("transform", `translate(0, ${parTop - 30})`);
+
+    svg.selectAll("myPath")
+    .data(graph3Data)
+    .enter()
+    .append("path")
+        //.attr("class", d => "line " + d.Species)
+        .attr("d", path)
+        .style("fill", "none" )
+        .style("stroke", function(d){ return( d.averageConsumption <= 2.5 ? 'steelBlue' : 'red')} )
+        .style("opacity", 0.5)
+    .attr("transform", `translate(0, ${parTop})`)
+
+    svg.append("text")
+    .attr("x", width / 2 )
+    .attr("y", parTop - 50)
+    .attr("font-size", "25px")
+    .attr("text-anchor", "middle")
+    .text("Parallel Plot High vs Low Alcohol Consumption")
+
+    svg.selectAll("myAxis")
+    .data(dimensions).enter()
+    .append("g")
+    .attr("class", "axis")
+    .attr("transform", d => "translate(" + pX(d) + `, ${parTop})`)
+    .each(function(d) { d3.select(this).call(d3.axisLeft().ticks(5).scale(y[d]))})
+    .append("text")
+      .style("text-anchor", "middle")
+      .style("font-size", "15px")
+      .attr("y", -9)
+      .text(function(d) { return d; })
+      .style("fill", "black")
+
 
 }).catch(function(error) {
   console.log(error);
