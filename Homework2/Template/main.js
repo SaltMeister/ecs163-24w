@@ -12,14 +12,10 @@ let distrMargin = {top: 10, right: 30, bottom: 30, left: 60},
     distrWidth = 500 - distrMargin.left - distrMargin.right,
     distrHeight = 350 - distrMargin.top - distrMargin.bottom;
 
-let teamLeft = 0, teamTop = 400;
+let teamLeft = 600, teamTop = 50;
 let teamMargin = {top: 10, right: 30, bottom: 30, left: 60},
-    teamWidth = width - teamMargin.left - teamMargin.right,
-    teamHeight = height-450 - teamMargin.top - teamMargin.bottom;
-
-
-
-
+    teamWidth =  width - 800 - teamMargin.left - teamMargin.right,
+    teamHeight = 400 - teamMargin.top - teamMargin.bottom;
 
 d3.csv("student-mat.csv").then(rawData =>{
     console.log("rawData", rawData);
@@ -40,11 +36,18 @@ d3.csv("student-mat.csv").then(rawData =>{
     const g1 = svg.append("g")
                 .attr("width", scatterWidth + scatterMargin.left + scatterMargin.right)
                 .attr("height", scatterHeight + scatterMargin.top + scatterMargin.bottom)
-                .attr("transform", `translate(${scatterMargin.left}, ${scatterMargin.top})`)
+                .attr("transform", `translate(${scatterMargin.left+ 10}, ${scatterMargin.top+70})`)
 
                 // Bar Graph for student age groups and acohol consumption with age groups
                 // ScatterPlot of  age and abscences
                 // ADvanced Table
+
+    g1.append("text")
+    .attr("x", scatterWidth / 2)
+    .attr("y", -20)
+    .attr("font-size", "30px")
+    .attr("text-anchor", "middle")
+    .text("Scatterplot Age and Absences")
 
     g1.append("text")
     .attr("x", scatterWidth / 2)
@@ -95,7 +98,7 @@ d3.csv("student-mat.csv").then(rawData =>{
         .attr("fill", "steelblue")
 
     // Plot 2
-
+    //#region
     const g2 = svg.append("g")
     .attr("width", distrLeft + distrMargin.left + distrMargin.right)
     .attr("height", distrHeight + distrMargin.top + distrMargin.bottom)
@@ -120,7 +123,7 @@ d3.csv("student-mat.csv").then(rawData =>{
 
     let highConsumption = graph2Data.filter(d => d.averageConsumption > 2.5)
     let lowConsumption = graph2Data.filter(d => d.averageConsumption <= 2.5)
-    console.log(graph2Data, highConsumption, lowConsumption)
+    console.log(graph2Data)
 
     // Get Averages of q1 2 3 for each consumption class
     let highQ1 = 0
@@ -132,11 +135,18 @@ d3.csv("student-mat.csv").then(rawData =>{
         highQ2 += d.g2
         highQ3 += d.g3
     })
-    highConsumption = {
-        "Q1": highQ1 / highConsumption.length,
-        "Q2": highQ2 / highConsumption.length,
-        "Q3": highQ3/ highConsumption.length
+
+    highConsumption = [{
+        "quarter": 'G1',
+        "grade": highQ1 / highConsumption.length
+    }, {
+        "quarter": 'G2',
+        "grade": highQ2 / highConsumption.length
+    }, {
+        "quarter": 'G3',
+        "grade": highQ3/ highConsumption.length
     }
+]
 
     let lowQ1 = 0
     let lowQ2 = 0
@@ -147,12 +157,125 @@ d3.csv("student-mat.csv").then(rawData =>{
         lowQ2 += d.g2
         lowQ3 += d.g3
     })
-    lowConsumption = {
-        "Q1": lowQ1 / lowConsumption.length,
-        "Q2": lowQ2 / lowConsumption.length,
-        "Q3": lowQ3/ lowConsumption.length
-    }
+    lowConsumption = [{
+            "quarter": 'G1',
+            "grade": lowQ1 / lowConsumption.length
+        }, {
+            "quarter": 'G2',
+            "grade": lowQ2 / lowConsumption.length
+        }, {
+            "quarter": 'G3',
+            "grade": lowQ3 / lowConsumption.length
+        }
+    ]
+
     console.log(lowConsumption)
+
+    // Plot 2
+           
+    const g3 = svg.append("g")
+                .attr("width", teamWidth + teamMargin.left + teamMargin.right)
+                .attr("height", teamHeight + teamMargin.top + teamMargin.bottom)
+                .attr("transform", `translate(${teamLeft + teamMargin.left}, ${teamTop - teamMargin.top})`)
+
+    const lX = d3.scaleBand()
+        .domain(lowConsumption.map(d => d.quarter))
+        .range([teamMargin.left, teamWidth])
+
+    const lY = d3.scaleLinear()
+        .domain([12, 9])
+        .range([teamMargin.top, teamHeight ])
+
+    const lXAxisCall = d3.axisBottom(lX)
+    const lYAxisCall = d3.axisLeft(lY)
+
+    g3.append("text")
+    .attr("x", (teamWidth / 2) + teamMargin.left - 30)
+    .attr("y", 0)
+    .attr("font-size", "30px")
+    .attr("text-anchor", "middle")
+    .text("Grades Per Period")
+
+    g3.append("text")
+    .attr("x", (teamWidth / 2) + teamMargin.left - 30)
+    .attr("y", teamHeight + 50)
+    .attr("font-size", "20px")
+    .attr("text-anchor", "middle")
+    .text("Periods")
+
+    g3.append("text")
+    .attr("x", -teamHeight/2)
+    .attr("y", -20)
+    .attr("font-size", "20px")
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .text("Grades")
+
+    // Draw Legend
+    g3.append("rect")
+    .attr("fill", "steelblue")
+    .attr("x", teamWidth - teamMargin.left- 50)
+    .attr("y", 20)
+    .attr("width", 20)
+    .attr("height", 20)
+
+    g3.append("text")
+    .attr("x", teamWidth - teamMargin.left)
+    .attr("y", 35)
+    .attr("font-size", "15px")
+    .attr("text-anchor", "left")
+    .text("Low Alcohol Consumers (average consumption <= 2.5)")
+
+    g3.append("rect")
+    .attr("fill", "red")
+    .attr("x", teamWidth - teamMargin.left-50)
+    .attr("y", 80)
+    .attr("width", 20)
+    .attr("height", 20)
+
+    g3.append("text")
+    .attr("x", teamWidth - teamMargin.left)
+    .attr("y", 95)
+    .attr("font-size", "15px")
+    .attr("text-anchor", "left")
+    .text("High Alcohol Consumers (average consumption > 2.5)")
+    g3.append("g")
+    .attr("transform", `translate(0, ${teamHeight})`)
+    .call(lXAxisCall)
+        .selectAll("text")
+        .attr("font-size", "20px")
+        .attr("text-anchor", "middle")
+
+    g3.append("g")
+    .attr("transform", `translate(${teamMargin.left}, 0)`)
+    .call(lYAxisCall)
+    .selectAll("text")
+        .attr("font-size", "20px")
+        .attr("text-anchor", "middle")
+        .attr("transform", "translate(-20, 0)")
+
+    g3.append("path")
+        .datum(lowConsumption)
+        .attr("fill", "none")
+        .attr("stroke", "steelblue")
+        .attr("stroke-width", 5)
+        .attr("d", d3.line()
+        .x(d => lX(d.quarter) + lX.bandwidth()/2)
+        .y(d => lY(d.grade))
+        );
+
+    g3.append("path")
+        .datum(highConsumption)
+        .attr("fill", "none")
+        .attr("stroke", "red")
+        .attr("stroke-width", 5)
+        .attr("d", d3.line()
+        .x(d => lX(d.quarter) + lX.bandwidth()/2)
+        .y(d => lY(d.grade))
+        );
+    //#endregion
+
+    //Plot 3
 
 }).catch(function(error) {
   console.log(error);
