@@ -34,24 +34,34 @@ d3.csv("student-mat.csv").then(rawData =>{
     });
 
 
-    function handleZoom(e) {
-        console.log(e)
-        d3.select("svg")
-            .attr('transform', e.transform);
+    function handleZoom() {
+        let newX = d3.event.transform.rescaleX(gX)
+        let newY = d3.event.transform.rescaleY(gY)
+
+        xAxis.call(d3.axisBottom(newX))
+        yAxis.call(d3.axisLeft(newY))
+
+        g1.selectAll('circle')
+            .attr('cx', d => {return newX(d.absences)})
+            .attr('cy', d => {return newY(d.age)});
     }
         // ZOom Feature 
     let zoom = d3.zoom()
+        .scaleExtent([0.5, 20])
+        .extent([[0,0], [scatterWidth, scatterHeight]])
         .on('zoom', handleZoom);
 
   //#region plot1 
 //plot 1
-    const svg = d3.select("svg")
-        .call(d3.zoom().on("zoom", function () {
-            svg.attr("transform", d3.zoomTransform(this))
-        }))
+    const svg = d3.select("#svg")
 
 
-    const g1 = svg.append("g")
+    const scatterPlot = d3.select("#svg2")
+        // .call(d3.zoom().on("zoom", function () {
+        //     scatterPlot.attr("transform", d3.zoomTransform(this))
+        // }))
+
+    const g1 = scatterPlot.append("g")
                 .attr("width", scatterWidth + scatterMargin.left + scatterMargin.right)
                 .attr("height", scatterHeight + scatterMargin.top + scatterMargin.bottom)
                 .attr("transform", `translate(${scatterMargin.left+ 10}, ${scatterMargin.top+70})`)
@@ -95,7 +105,7 @@ d3.csv("student-mat.csv").then(rawData =>{
     const gXAxisCall = d3.axisBottom(gX).ticks(20)
     const gYAxisCall = d3.axisLeft(gY).ticks(7)
     
-    g1.append("g")
+    let xAxis = g1.append("g")
     .attr("transform", `translate(0, ${scatterHeight})`)
     .call(gXAxisCall)
     .selectAll("text")
@@ -104,9 +114,20 @@ d3.csv("student-mat.csv").then(rawData =>{
         .attr("text-anchor", "end")
         .attr("transform", "rotate(-40)")
     
-    g1.append("g")
+    let yAxis = g1.append("g")
     .attr("transform", `translate(0, 0)`)
     .call(gYAxisCall)
+
+
+    g1.append("rect")
+        .attr("x", scatterLeft-scatterMargin.left)
+        .attr("y", scatterTop)
+        .attr("width", scatterWidth)
+        .attr("height", scatterHeight)
+        .style("fill", "none")
+        .style("pointer-events", "all")
+        .attr('transform', 'translate(' + scatterMargin.left + ',' + scatterMargin.top + ')')
+        .call(zoom);
 
     const circle = g1.selectAll("circle").data(rawData)
 
@@ -116,7 +137,7 @@ d3.csv("student-mat.csv").then(rawData =>{
         .attr("cy", d =>  gY(d.age) )
         .attr("r", 3)
         .attr("fill", "steelblue")
-
+   
 
     
     //#endregion
