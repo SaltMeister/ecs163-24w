@@ -33,19 +33,33 @@ d3.csv("student-mat.csv").then(rawData =>{
             e.age = Number(e.age)
     });
 
+
+    function handleZoom(e) {
+        console.log(e)
+        d3.select("svg")
+            .attr('transform', e.transform);
+    }
+        // ZOom Feature 
+    let zoom = d3.zoom()
+        .on('zoom', handleZoom);
+
   //#region plot1 
 //plot 1
     const svg = d3.select("svg")
+        .call(d3.zoom().on("zoom", function () {
+            svg.attr("transform", d3.zoomTransform(this))
+        }))
 
 
     const g1 = svg.append("g")
                 .attr("width", scatterWidth + scatterMargin.left + scatterMargin.right)
                 .attr("height", scatterHeight + scatterMargin.top + scatterMargin.bottom)
                 .attr("transform", `translate(${scatterMargin.left+ 10}, ${scatterMargin.top+70})`)
-
                 // Bar Graph for student age groups and acohol consumption with age groups
                 // ScatterPlot of  age and abscences
                 // ADvanced Table
+
+        // Handle Brushing over dataset
 
     g1.append("text")
     .attr("x", scatterWidth / 2)
@@ -94,13 +108,17 @@ d3.csv("student-mat.csv").then(rawData =>{
     .attr("transform", `translate(0, 0)`)
     .call(gYAxisCall)
 
-    const rects = g1.selectAll("circle").data(rawData)
+    const circle = g1.selectAll("circle").data(rawData)
 
-    rects.enter().append("circle")
+    // Create Circles
+    circle.enter().append("circle")
         .attr("cx", d =>  gX(d.absences))
         .attr("cy", d =>  gY(d.age) )
         .attr("r", 3)
         .attr("fill", "steelblue")
+
+
+    
     //#endregion
     // Plot 2
     //#region plot2
@@ -280,6 +298,8 @@ d3.csv("student-mat.csv").then(rawData =>{
 
     //Plot 3
     // Process Data
+
+    // Not sure or unable to handle dataset parallel with booleans and range values so I treat them as 1 and 0 boolean values
     let graph3Data = []
     
     rawData.forEach(d => {
@@ -287,13 +307,13 @@ d3.csv("student-mat.csv").then(rawData =>{
 
         graph3Data.push(
             {
-                "averageConsumption": averageConsumption,
+                "averageConsumption": averageConsumption <= 2.5 ? "lowConsumer" : "highConsumer",
                 "higherEdu (boolean)": d.higher === "yes" ? 1 : 0,
                 "activities (boolean)": d.activities === "yes" ? 1 : 0,
                 "romantic (boolean)": d.romantic === "yes" ? 1 : 0,
                 "nurse (boolean)": d.nursery === "yes" ? 1 : 0,
-                "goout": Number(d.goout),
-                "famrel": Number(d.famrel),
+                "how often goes out": Number(d.goout),
+                "family relationship": Number(d.famrel),
                 
             }
         )
@@ -323,21 +343,52 @@ d3.csv("student-mat.csv").then(rawData =>{
     function path(d) {
         return d3.line()(dimensions.map(function(p) { return [pX(p), y[p](d[p])]; }));
     }
+
+    var highlight = (d) => {
+        let studentType = d.averageConsumption
+
+        d3.selectAll(".line")
+            .transition().duration(200)
+            .style("stroke", "lightgrey")
+            .style("opacity", "0.2")
+        console.log(studentType)
+
+        d3.selectAll("." + studentType)
+            .transition().duration(200)
+            .style("stroke", handleColor)
+            .style("opacity", "1")
+    }
+    var doNotHighlight = (d) => {
+        d3.selectAll(".line")
+            .transition().duration(200).delay(100)
+            .style("stroke", handleColor)
+            .style("opacity", "1")
+    }
+
+    // Handle color for paths
+    var handleColor = (d) => {
+        return d.averageConsumption === "highConsumer" ? 'red' : 'steelblue'
+    }
+    // Background Box
     svg.append("rect")
     .attr("width", parWidth)
     .attr("height", parHeight + 50)
     .attr("fill", "lightgrey")
-    .attr("transform", `translate(0, ${parTop - 30})`);
+    .attr("transform", `translate(0, ${parTop - 30})`)
+    .on('click', doNotHighlight) // Remove Highlighting when clicking on background
 
     svg.selectAll("myPath")
     .data(graph3Data)
     .enter()
     .append("path")
-        //.attr("class", d => "line " + d.Species)
+        .attr("class", d => {return "line " + d.averageConsumption})
         .attr("d", path)
         .style("fill", "none" )
-        .style("stroke", function(d){ return( d.averageConsumption <= 2.5 ? 'steelBlue' : 'red')} )
-        .style("opacity", 0.5)
+        .style("stroke", handleColor)
+        .style("opacity", 0.2)
+        .on('click', highlight) 
+        // .on('mouseleave', doNotHighlight)
+
     .attr("transform", `translate(0, ${parTop})`)
 
     svg.append("text")
@@ -359,7 +410,6 @@ d3.csv("student-mat.csv").then(rawData =>{
       .attr("y", -9)
       .text(function(d) { return d; })
       .style("fill", "black")
-
 
 }).catch(function(error) {
   console.log(error);
